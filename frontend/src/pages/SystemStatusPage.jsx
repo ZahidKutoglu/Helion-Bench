@@ -3,59 +3,34 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
 import { StatusTable } from "../features/system-status/StatusTable";
 import { StatusBadge } from "../components/StatusBadge";
-import {
-  useApiHealth,
-  useDatabaseHealth,
-  useQdrantHealth,
-  useReadyHealth,
-  useSystemInfo,
-} from "../hooks/useHealth";
-import { formatTimestamp, getIngestionSummary, getProviders } from "../lib/api";
-
-function ReadyBanner({ ready }) {
-  if (ready.isPending) return <p className="text-[13px] text-ink-muted">Checking storage…</p>;
-  if (ready.isError) {
-    return (
-      <p className="text-[13px] text-bad">
-        The UI could not reach the API. Start the backend on port 8000.
-      </p>
-    );
-  }
-  if (ready.data?.ok && ready.data.data?.status === "ok") {
-    return <p className="text-[13px] text-ok">API and storage checks succeeded.</p>;
-  }
-  return (
-    <p className="text-[13px] text-warn">
-      The API is up, but a dependency failed. Read the table before assuming search can work.
-    </p>
-  );
-}
+import { useHealth } from "../hooks/useHealth";
+import { formatTimestamp, getIngestionSummary, getProviders, getSystemInfo } from "../lib/api";
 
 export function SystemStatusPage() {
-  const api = useApiHealth();
-  const database = useDatabaseHealth();
-  const qdrant = useQdrantHealth();
-  const ready = useReadyHealth();
-  const info = useSystemInfo();
+  const health = useHealth();
   const providers = useQuery({ queryKey: ["providers"], queryFn: getProviders, retry: 1 });
   const ingestion = useQuery({ queryKey: ["ingestion-summary"], queryFn: getIngestionSummary, retry: 1 });
+  const info = useQuery({ queryKey: ["system-info"], queryFn: getSystemInfo, retry: 1 });
 
   return (
     <div>
       <PageHeader
         kicker="Operations"
         title="System Status"
-        description="Live checks only. Latency is round-trip time for the check, not an SLO."
+        description="This demo runs entirely in the browser. There is no remote API, Postgres, or Qdrant server."
       />
       <div className="mb-5">
-        <ReadyBanner ready={ready} />
+        {health.isPending ? <p className="text-[13px] text-ink-muted">Checking local store…</p> : null}
+        {health.isError ? (
+          <p className="text-[13px] text-bad">The browser store could not be read.</p>
+        ) : null}
+        {health.data?.ready ? (
+          <p className="text-[13px] text-ok">Browser app and local knowledge index are available.</p>
+        ) : null}
       </div>
-      <StatusTable api={api} database={database} qdrant={qdrant} />
+      <StatusTable snapshot={health.data} />
 
       <h2 className="mb-3 mt-10 text-[13px] font-medium">Providers</h2>
-      {providers.isError ? (
-        <p className="text-[13px] text-bad">Could not load provider status.</p>
-      ) : null}
       {providers.data ? (
         <dl className="max-w-3xl text-[13px]">
           <div className="grid grid-cols-[160px_1fr] gap-4 border-b border-line py-2">
@@ -68,17 +43,17 @@ export function SystemStatusPage() {
           <div className="grid grid-cols-[160px_1fr] gap-4 border-b border-line py-2">
             <dt className="text-ink-muted">Embeddings</dt>
             <dd>
-              <StatusBadge status={providers.data.embeddings.state} /> {providers.data.embeddings.name}{" "}
-              — {providers.data.embeddings.message}
+              <StatusBadge status={providers.data.embeddings.state} /> {providers.data.embeddings.name} —{" "}
+              {providers.data.embeddings.message}
             </dd>
           </div>
           <div className="grid grid-cols-[160px_1fr] gap-4 border-b border-line py-2">
-            <dt className="text-ink-muted">Qdrant mode</dt>
-            <dd className="font-mono text-[12px]">{providers.data.qdrant_mode}</dd>
+            <dt className="text-ink-muted">Index</dt>
+            <dd className="font-mono text-[12px]">{providers.data.index_mode}</dd>
           </div>
           <div className="grid grid-cols-[160px_1fr] gap-4 border-b border-line py-2">
-            <dt className="text-ink-muted">Database</dt>
-            <dd className="font-mono text-[12px]">{providers.data.database_backend}</dd>
+            <dt className="text-ink-muted">Storage</dt>
+            <dd className="font-mono text-[12px]">{providers.data.storage}</dd>
           </div>
         </dl>
       ) : null}
@@ -99,9 +74,7 @@ export function SystemStatusPage() {
                     {item.title}
                   </Link>
                   <p className="text-bad">{item.error_message}</p>
-                  <p className="font-mono text-[11px] text-ink-faint">
-                    {formatTimestamp(item.updated_at)}
-                  </p>
+                  <p className="font-mono text-[11px] text-ink-faint">{formatTimestamp(item.updated_at)}</p>
                 </li>
               ))}
             </ul>
@@ -109,9 +82,9 @@ export function SystemStatusPage() {
         </>
       ) : null}
 
-      {info.data?.ok && info.data.data ? (
+      {info.data ? (
         <p className="mt-8 text-[12px] text-ink-faint">
-          {info.data.data.app_name} {info.data.data.version} · {info.data.data.environment}
+          {info.data.app_name} {info.data.version} · {info.data.environment}
         </p>
       ) : null}
     </div>

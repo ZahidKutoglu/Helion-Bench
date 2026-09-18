@@ -1,129 +1,100 @@
-const explicit = import.meta.env.VITE_API_BASE_URL;
-export const API_BASE =
-  explicit === undefined || explicit === "" ? "" : String(explicit).replace(/\/$/, "");
-
-async function parseJson(response) {
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
+import {
+  createInvestigation as createInvestigationRecord,
+  deleteDocument as removeDocument,
+  getCatalog as catalogFromStore,
+  getDocument as documentFromStore,
+  getIngestionSummary as ingestionFromStore,
+  getInvestigation as investigationFromStore,
+  getProviders as providersFromStore,
+  healthSnapshot,
+  listDocuments as documentsFromStore,
+  listEvaluationCases as casesFromStore,
+  listEvaluationRuns as runsFromStore,
+  listInvestigations as investigationsFromStore,
+  reprocessDocument as reindexDocument,
+  resetDemoData as restoreDemo,
+  runEvaluationNow,
+  searchKnowledge as searchFromStore,
+  systemInfo,
+  uploadDocument as ingestUpload,
+} from "../engine/store";
 
 export function errorMessage(payload, fallback = "Request failed") {
   return payload?.error?.message || payload?.message || fallback;
 }
 
-async function request(path, options = {}) {
-  const { signal, ...rest } = options;
-  const response = await fetch(`${API_BASE}${path}`, { ...rest, signal });
-  const data = await parseJson(response);
-  if (!response.ok) {
-    const error = new Error(errorMessage(data, `Request failed (${response.status})`));
-    error.status = response.status;
-    error.body = data;
-    throw error;
-  }
-  return data;
-}
-
-export function fetchJson(path) {
-  return fetch(`${API_BASE}${path}`, { headers: { Accept: "application/json" } }).then(
-    async (response) => {
-      const data = await parseJson(response);
-      return { ok: response.ok, status: response.status, data };
-    },
-  );
-}
-
-export function getDocuments(params = {}, options = {}) {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") query.set(key, value);
-  });
-  const suffix = query.toString() ? `?${query}` : "";
-  return request(`/api/v1/documents${suffix}`, options);
+export function getDocuments(params = {}) {
+  return Promise.resolve(documentsFromStore(params));
 }
 
 export function getDocument(id) {
-  return request(`/api/v1/documents/${encodeURIComponent(id)}`);
+  return Promise.resolve(documentFromStore(id));
 }
 
 export function getCatalog() {
-  return request("/api/v1/documents/catalog");
+  return Promise.resolve(catalogFromStore());
 }
 
-export async function uploadDocument(formData) {
-  const response = await fetch(`${API_BASE}/api/v1/documents`, {
-    method: "POST",
-    body: formData,
-  });
-  const data = await parseJson(response);
-  if (!response.ok) {
-    const error = new Error(errorMessage(data, "Upload failed"));
-    error.status = response.status;
-    error.body = data;
-    throw error;
-  }
-  return data;
+export function uploadDocument(formData) {
+  return ingestUpload(formData);
 }
 
 export function reprocessDocument(id) {
-  return request(`/api/v1/documents/${encodeURIComponent(id)}/reprocess`, { method: "POST" });
+  return Promise.resolve(reindexDocument(id));
 }
 
 export function deleteDocument(id) {
-  return request(`/api/v1/documents/${encodeURIComponent(id)}`, { method: "DELETE" });
+  removeDocument(id);
+  return Promise.resolve();
 }
 
 export function searchKnowledge(body) {
-  return request("/api/v1/search", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
-  });
+  return Promise.resolve(searchFromStore(body));
 }
 
 export function createInvestigation(body) {
-  return request("/api/v1/investigations", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
-  });
+  return Promise.resolve(createInvestigationRecord(body));
 }
 
 export function listInvestigations() {
-  return request("/api/v1/investigations");
+  return Promise.resolve(investigationsFromStore());
 }
 
 export function getInvestigation(id) {
-  return request(`/api/v1/investigations/${encodeURIComponent(id)}`);
+  return Promise.resolve(investigationFromStore(id));
 }
 
 export function runEvaluation(k) {
-  return request("/api/v1/evaluation/runs", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ k }),
-  });
+  return Promise.resolve(runEvaluationNow(k));
 }
 
 export function listEvaluationRuns() {
-  return request("/api/v1/evaluation/runs");
+  return Promise.resolve(runsFromStore());
 }
 
 export function listEvaluationCases() {
-  return request("/api/v1/evaluation/cases");
+  return Promise.resolve(casesFromStore());
 }
 
 export function getIngestionSummary() {
-  return request("/api/v1/system/ingestion");
+  return Promise.resolve(ingestionFromStore());
 }
 
 export function getProviders() {
-  return request("/api/v1/system/providers");
+  return Promise.resolve(providersFromStore());
+}
+
+export function getSystemInfo() {
+  return Promise.resolve(systemInfo());
+}
+
+export function getHealth() {
+  return Promise.resolve(healthSnapshot());
+}
+
+export function resetDemoData() {
+  restoreDemo();
+  return Promise.resolve(systemInfo());
 }
 
 export function formatLatency(ms) {

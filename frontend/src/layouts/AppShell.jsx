@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { StatusDot } from "../components/StatusDot";
 import { ThemeToggle } from "../components/ThemeToggle";
-import { summarizeReady, useReadyHealth } from "../hooks/useHealth";
+import { summarizeReady, useHealth } from "../hooks/useHealth";
 
 const NAV = [
   {
@@ -32,12 +32,12 @@ const NAV = [
   {
     to: "/status",
     label: "System Status",
-    purpose: "Live dependency health",
+    purpose: "Local store and provider status",
   },
   {
     to: "/settings",
     label: "Settings",
-    purpose: "Theme and public configuration",
+    purpose: "Theme and demo corpus",
   },
 ];
 
@@ -92,7 +92,7 @@ function NavItems({ compact = false }) {
 }
 
 export function AppShell({ theme, onThemeChange }) {
-  const ready = useReadyHealth();
+  const ready = useHealth();
   const summary = summarizeReady(ready);
 
   return (
@@ -109,7 +109,7 @@ export function AppShell({ theme, onThemeChange }) {
             <NavItems />
           </nav>
           <div className="border-t border-line px-5 py-4 text-[11px] text-ink-faint">
-            Synthetic corpus · labeled development providers
+            Browser-only demo · labeled development providers
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">

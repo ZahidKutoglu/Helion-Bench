@@ -6,11 +6,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
-    proxy: {
-      "/health": "http://localhost:8000",
-      "/api": "http://localhost:8000",
-      "/docs": "http://localhost:8000",
-    },
+  },
+  preview: {
+    port: 4173,
   },
   test: {
     environment: "jsdom",

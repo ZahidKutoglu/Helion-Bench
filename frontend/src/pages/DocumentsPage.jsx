@@ -49,7 +49,7 @@ export function DocumentsPage() {
       <PageHeader
         kicker="Sources"
         title="Documents"
-        description="Upload Markdown, text, or JSON. A document is indexed only after chunking and Qdrant upsert succeed."
+        description="Upload Markdown, text, or JSON. A document is indexed only after chunking and in-browser embedding succeed."
       />
       <UploadForm
         catalog={catalog.data}
@@ -100,8 +100,7 @@ export function DocumentsPage() {
       {list.isPending ? <p className="text-[13px] text-ink-muted">Loading documents…</p> : null}
       {!list.isPending && items.length === 0 ? (
         <p className="text-[13px] text-ink-muted">
-          No documents yet. Seed the synthetic corpus (`python -m app.seed` from backend/) or upload a
-          file.
+          No documents yet. Restore the synthetic corpus from Settings or upload a file.
         </p>
       ) : null}
       {items.length ? (

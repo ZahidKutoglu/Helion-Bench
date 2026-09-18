@@ -29,7 +29,7 @@ export function KnowledgeBasePage() {
       <PageHeader
         kicker="Search"
         title="Knowledge Base"
-        description="Hybrid search over indexed chunks. Ranking combines hashed n-gram cosine similarity with token overlap. Scores are not probabilities."
+        description="Hybrid search over the in-browser index. Ranking combines hashed n-gram cosine similarity with token overlap. Scores are not probabilities."
       />
       <form
         className="mb-6 grid gap-3 md:grid-cols-2 lg:grid-cols-6"

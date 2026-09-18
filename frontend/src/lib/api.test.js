@@ -1,13 +1,14 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { errorMessage, formatPercent, getDocuments, searchKnowledge } from "./api";
+import { __resetStoreForTests } from "../engine/store";
 
 afterEach(() => {
-  vi.unstubAllGlobals();
+  __resetStoreForTests();
 });
 
 describe("errorMessage", () => {
   it("reads the API error envelope", () => {
-    expect(errorMessage({ error: { message: "Qdrant is unavailable" } })).toBe("Qdrant is unavailable");
+    expect(errorMessage({ error: { message: "Index is empty" } })).toBe("Index is empty");
   });
 
   it("falls back when the body is empty", () => {
@@ -15,33 +16,16 @@ describe("errorMessage", () => {
   });
 });
 
-describe("request helpers", () => {
-  it("throws with the server message when a request fails", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 503,
-        text: async () => JSON.stringify({ error: { message: "Qdrant is unavailable" } }),
-      }),
-    );
-    await expect(searchKnowledge({ query: "timing", k: 8 })).rejects.toThrow("Qdrant is unavailable");
-  });
-
-  it("returns parsed JSON on success and forwards AbortSignal", async () => {
-    const signal = new AbortController().signal;
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ items: [], total: 0 }),
+describe("local knowledge store", () => {
+  it("seeds synthetic documents and searches them", async () => {
+    const listed = await getDocuments({ q: "TS-4410" });
+    expect(listed.total).toBeGreaterThan(0);
+    const search = await searchKnowledge({
+      query: "Why did timing synchronization fail in build B-104?",
+      k: 8,
     });
-    vi.stubGlobal("fetch", fetchMock);
-    const data = await getDocuments({ q: "TS-4410", status: "indexed" }, { signal });
-    expect(data.total).toBe(0);
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/documents?q=TS-4410&status=indexed",
-      expect.objectContaining({ signal }),
-    );
+    expect(search.hits.length).toBeGreaterThan(0);
+    expect(search.hits.some((hit) => hit.document_id === "SYN-FAIL-TS-B104")).toBe(true);
   });
 });
 
