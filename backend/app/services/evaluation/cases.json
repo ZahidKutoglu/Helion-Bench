@@ -1,0 +1,44 @@
+[
+  {
+    "id": "eval-timing-b104",
+    "question": "Why did the timing synchronization test fail in build B-104?",
+    "expected_document_ids": ["SYN-FAIL-TS-B104", "SYN-TROUBLE-TS-001", "SYN-BUILD-B104"],
+    "expected_concepts": ["timing drift", "clock offset", "PPS"],
+    "expect_insufficient": false
+  },
+  {
+    "id": "eval-snr",
+    "question": "What caused signal-to-noise degradation on the sensing pipeline?",
+    "expected_document_ids": ["SYN-FAIL-SP-SNR", "SYN-TROUBLE-SP-001"],
+    "expected_concepts": ["SNR", "front-end gain"],
+    "expect_insufficient": false
+  },
+  {
+    "id": "eval-packet-loss",
+    "question": "Which communications interface saw packet loss after build B-104?",
+    "expected_document_ids": ["SYN-FAIL-CI-PKT", "SYN-REL-1-4-0"],
+    "expected_concepts": ["IF-2", "packet loss"],
+    "expect_insufficient": false
+  },
+  {
+    "id": "eval-daq-latency",
+    "question": "How did data acquisition latency change in the thermal chamber?",
+    "expected_document_ids": ["SYN-FAIL-DAQ-LAT", "SYN-REQ-DAQ-001"],
+    "expected_concepts": ["latency", "thermal"],
+    "expect_insufficient": false
+  },
+  {
+    "id": "eval-multi-doc",
+    "question": "What verification framework change accompanied the B-104 timing failures?",
+    "expected_document_ids": ["SYN-TSPEC-TS-B104", "SYN-VF-NOTES-001", "SYN-FAIL-TS-B104"],
+    "expected_concepts": ["TS-4410", "threshold"],
+    "expect_insufficient": false
+  },
+  {
+    "id": "eval-insufficient",
+    "question": "Why did the satellite Ka-band payload firmware crash during orbit raising?",
+    "expected_document_ids": [],
+    "expected_concepts": [],
+    "expect_insufficient": true
+  }
+]
