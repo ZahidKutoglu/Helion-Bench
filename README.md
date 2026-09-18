@@ -48,22 +48,21 @@ Restore the original synthetic corpus from **Settings** if you uploaded files an
 
 ## Deploy to Vercel
 
-This repo is a static Vite app. Point Vercel at the GitHub repo.
+There is no `package.json` at the repo root. Use **one** of these. Do not mix them.
 
-**Option A — import the whole repository**
+### Recommended
 
-- Framework: Vite
-- The root `vercel.json` already sets:
-  - install: `npm install --prefix frontend`
-  - build: `npm run build --prefix frontend`
-  - output: `frontend/dist`
-  - SPA rewrite to `index.html`
+1. Vercel → Project → Settings → General → **Root Directory** = `frontend`
+2. Clear any custom **Install Command** / **Build Command** / **Output Directory** overrides (they should be the Vite defaults: `npm install`, `npm run build`, `dist`)
+3. Redeploy
 
-**Option B — Root Directory = `frontend`**
+If a previous deploy used `npm install --prefix frontend` while Root Directory was already `frontend`, npm looked for `frontend/frontend/package.json` and failed.
 
-Then Vercel uses `frontend/vercel.json`.
+### Alternative (Root Directory left empty)
 
-After deploy, open the Vercel URL. The synthetic corpus seeds automatically. No environment variables, API keys, Postgres, or Qdrant are required.
+Leave Root Directory as the repository root. The root `vercel.json` runs `cd frontend && npm install` and `cd frontend && npm run build`.
+
+No environment variables are required.
 
 ---
 
